@@ -1,9 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { Card, Icon, Avatar, Col, Typography, Row } from "antd";
-
-const { Title } = Typography;
-const { Meta } = Card;
+import { Card, Icon, Col, Typography, Row } from "antd";
 
 function BlogPage() {
   const [blogs, setBlogs] = useState([]);
@@ -29,7 +26,6 @@ function BlogPage() {
             <Icon type="setting" key="setting" />,
             <Icon type="edit" key="edit" />,
             <a href={`/blog/post/${blog._id}`}>
-              {" "}
               <Icon type="ellipsis" key="ellipsis" />
             </a>,
           ]}
@@ -44,8 +40,8 @@ function BlogPage() {
 
   return (
     <div style={{ width: "85%", margin: "3rem auto" }}>
-      <Title level={2}> Blog Lists </Title>
-      <Row gutter={[32, 16]}>{renderCards}</Row>
+      <Typography.Title level={2}> Blog Lists </Typography.Title>
+      <Row gutter={[48, 24]}>{renderCards}</Row>
     </div>
   );
 }
