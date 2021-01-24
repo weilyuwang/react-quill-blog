@@ -3,12 +3,10 @@ import ReactQuill, { Quill } from "react-quill";
 
 import "react-quill/dist/quill.snow.css";
 import axios from "axios";
-import ImageResize from "quill-image-resize";
-import VideoResize from "quill-video-resize";
 
-Quill.register("modules/imageResize", ImageResize);
+import QuillResize from "quill-resize-module-fix";
 
-Quill.register("modules/VideoResize", VideoResize);
+Quill.register("modules/resize", QuillResize);
 
 const BlockEmbed = Quill.import("blots/block/embed");
 class ImageBlot extends BlockEmbed {
@@ -34,7 +32,7 @@ class VideoBlot extends BlockEmbed {
       const videoTag = super.create();
       videoTag.setAttribute("src", value.src);
       videoTag.setAttribute("title", value.title);
-      videoTag.setAttribute("width", "80%%");
+      videoTag.setAttribute("width", "80%");
       videoTag.setAttribute("controls", "");
 
       return videoTag;
@@ -260,6 +258,7 @@ class QuillEditor extends React.Component {
 
   modules = {
     syntax: true,
+
     toolbar: {
       container: "#toolbar",
       handlers: {
@@ -267,10 +266,7 @@ class QuillEditor extends React.Component {
         insertVideo: this.videoHandler,
       },
     },
-    imageResize: {
-      displaySize: true,
-    },
-    VideoResize: {},
+    resize: {},
   };
 
   formats = [

@@ -49,12 +49,7 @@ function CreatePage(props) {
 
       <Form onSubmit={onSubmit}>
         <div style={{ textAlign: "center", margin: "2rem" }}>
-          <Button
-            size="large"
-            htmlType="submit"
-            className=""
-            onSubmit={onSubmit}
-          >
+          <Button size="large" htmlType="submit" className="">
             Submit
           </Button>
         </div>
