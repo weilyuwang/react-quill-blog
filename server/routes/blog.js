@@ -9,8 +9,11 @@ const config = require("../config/key");
 const AWS = require("aws-sdk");
 
 const s3 = new AWS.S3({
-  accessKeyId: config.accessKeyId,
-  secretAccessKey: config.secretAccessKey,
+  credentials: {
+    accessKeyId: config.accessKeyId,
+    secretAccessKey: config.secretAccessKey,
+  },
+  region: "us-east-2",
 });
 
 // Local disk storage multer config
@@ -36,7 +39,7 @@ const s3BucketStorage = multerS3({
   s3: s3,
   bucket: "quill-editor-blog-demo",
   key: function (req, file, cb) {
-    console.log(file);
+    console.log("multerS3: uploading file to S3 bucket...", file);
     cb(null, file.originalname); //use Date.now() for unique file keys
   },
 });
