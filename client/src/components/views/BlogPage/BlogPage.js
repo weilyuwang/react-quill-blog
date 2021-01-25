@@ -8,7 +8,6 @@ function BlogPage() {
   useEffect(() => {
     axios.get("/api/blog/getBlogs").then((response) => {
       if (response.data.success) {
-        console.log(response.data.blogs);
         setBlogs(response.data.blogs);
       } else {
         alert("Couldnt get blog`s lists");

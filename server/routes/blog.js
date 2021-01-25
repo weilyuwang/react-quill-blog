@@ -36,7 +36,6 @@ const upload = multer({ storage: storage }).single("file");
 // size: 24031
 
 router.post("/uploadfiles", (req, res) => {
-  console.log("uploading file ", req.file);
   upload(req, res, (err) => {
     if (err) {
       return res.json({ success: false, err });

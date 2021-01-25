@@ -12,7 +12,6 @@ function PostPage(props) {
 
     axios.post("/api/blog/getPost", variable).then((response) => {
       if (response.data.success) {
-        console.log(response.data.post);
         setPost(response.data.post);
       } else {
         alert("Couldnt get post");
