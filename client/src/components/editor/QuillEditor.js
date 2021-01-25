@@ -122,6 +122,7 @@ const QuillEditor = ({ onEditorChange }) => {
       };
       formData.append("file", file);
 
+      // approach 1: transmit file to backend -> backend uploads file to s3
       axios.post("/api/blog/uploadfiles", formData, config).then((response) => {
         if (response.data.success) {
           const quill = reactQuillRef.current.getEditor();
@@ -131,7 +132,7 @@ const QuillEditor = ({ onEditorChange }) => {
           let position = range ? range.index : 0;
 
           quill.insertEmbed(position, "image", {
-            src: "http://localhost:5000/" + response.data.url,
+            src: response.data.url,
             alt: response.data.fileName,
           });
           quill.setSelection(position + 2);
@@ -142,7 +143,7 @@ const QuillEditor = ({ onEditorChange }) => {
     }
   }, []);
 
-  const insertVideo = useCallback((e) => {
+  const insertVideoBackend = useCallback(async (e) => {
     e.stopPropagation();
     e.preventDefault();
 
@@ -158,6 +159,10 @@ const QuillEditor = ({ onEditorChange }) => {
         header: { "content-type": "multipart/form-data" },
       };
       formData.append("file", file);
+
+      // approach 1: transmit file to backend -> backend uploads file to s3
+
+      const startTime = Date.now();
 
       axios.post("/api/blog/uploadfiles", formData, config).then((response) => {
         if (response.data.success) {
@@ -175,6 +180,60 @@ const QuillEditor = ({ onEditorChange }) => {
           return alert("failed to upload file");
         }
       });
+
+      const endTime = Date.now();
+      const timeElapsed = endTime - startTime; // time in milliseconds
+      console.log("time elapased with backend-heavy approach: ", timeElapsed);
+    }
+  }, []);
+
+  const insertVideoFrontend = useCallback(async (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+
+    if (
+      e.currentTarget &&
+      e.currentTarget.files &&
+      e.currentTarget.files.length > 0
+    ) {
+      const file = e.currentTarget.files[0];
+
+      // approach 2: call backend to get a presigned s3 url -> frontend uploads file to s3
+
+      const startTime = Date.now();
+      const { data: uploadConfig } = await axios.get(
+        `/api/upload/signedUrl/${file.name}`
+      );
+      console.log("signedUrl:", uploadConfig.url);
+
+      // upload video to the signedUrl
+      console.log("file to upload to S3: ", file);
+      const config = {
+        headers: { "Content-Type": file.type },
+      };
+      axios.put(uploadConfig.url, file, config).then((response) => {
+        console.log(response.data);
+        if (response.data.success) {
+          // const quill = reactQuillRef.current.getEditor();
+          // quill.focus();
+          // let range = quill.getSelection();
+          // let position = range ? range.index : 0;
+          // quill.insertEmbed(position, "video", {
+          //   src: "http://localhost:5000/" + response.data.url,
+          //   title: response.data.fileName,
+          // });
+          // quill.setSelection(position + 2);
+        } else {
+          return alert("failed to upload file");
+        }
+      });
+      const endTime = Date.now();
+      const timeElapsed = endTime - startTime; // time in milliseconds
+      console.log(
+        "time elapased with frontend-heavy approach: ",
+        timeElapsed,
+        "ms"
+      );
     }
   }, []);
 
@@ -225,7 +284,7 @@ const QuillEditor = ({ onEditorChange }) => {
         accept="video/*"
         ref={inputOpenVideoRef}
         style={{ display: "none" }}
-        onChange={insertVideo}
+        onChange={insertVideoFrontend}
       />
     </div>
   );
