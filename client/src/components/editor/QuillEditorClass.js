@@ -1,11 +1,12 @@
-import React, { useEffect, useState, useRef, useCallback } from "react";
+import React from "react";
 import ReactQuill, { Quill } from "react-quill";
 
 import "react-quill/dist/quill.snow.css";
 import axios from "axios";
 
-import Resize from "quill-resize-module-fix";
-Quill.register("modules/resize", Resize);
+import QuillResize from "quill-resize-module-fix";
+
+Quill.register("modules/resize", QuillResize);
 
 const BlockEmbed = Quill.import("blots/block/embed");
 class ImageBlot extends BlockEmbed {
@@ -13,7 +14,7 @@ class ImageBlot extends BlockEmbed {
     const imgTag = super.create();
     imgTag.setAttribute("src", value.src);
     imgTag.setAttribute("alt", value.alt);
-    imgTag.setAttribute("width", "100%");
+    imgTag.setAttribute("width", "70%");
     return imgTag;
   }
 
@@ -31,7 +32,7 @@ class VideoBlot extends BlockEmbed {
       const videoTag = super.create();
       videoTag.setAttribute("src", value.src);
       videoTag.setAttribute("title", value.title);
-      videoTag.setAttribute("width", "100%");
+      videoTag.setAttribute("width", "80%");
       videoTag.setAttribute("controls", "");
 
       return videoTag;
@@ -40,7 +41,7 @@ class VideoBlot extends BlockEmbed {
       iframeTag.setAttribute("src", value);
       iframeTag.setAttribute("frameborder", "0");
       iframeTag.setAttribute("allowfullscreen", true);
-      iframeTag.setAttribute("width", "100%");
+      iframeTag.setAttribute("width", "80%");
       return iframeTag;
     }
   }
@@ -57,54 +58,43 @@ VideoBlot.blotName = "video";
 VideoBlot.tagName = "video";
 Quill.register(VideoBlot);
 
-const QuillEditor = ({ onEditorChange }) => {
-  const reactQuillRef = useRef(null);
-  const inputOpenImageRef = useRef();
-  const inputOpenVideoRef = useRef();
+class QuillEditor extends React.Component {
+  onEditorChange;
 
-  const [editorHtml, setEditorHtml] = useState(null);
+  constructor(props) {
+    super(props);
 
-  useEffect(() => {
-    onEditorChange(editorHtml);
-  }, [editorHtml, onEditorChange]);
+    this.state = {
+      files: [],
+    };
 
-  const imageHandler = useCallback(() => {
-    inputOpenImageRef.current.click();
-  }, []);
+    this.reactQuillRef = null;
 
-  const videoHandler = useCallback(() => {
-    inputOpenVideoRef.current.click();
-  }, []);
+    this.inputOpenImageRef = React.createRef();
+    this.inputOpenVideoRef = React.createRef();
+    this.inputOpenFileRef = React.createRef();
+  }
 
-  const modules = {
-    syntax: true,
-
-    toolbar: {
-      container: "#toolbar",
-      handlers: {
-        insertImage: imageHandler,
-        insertVideo: videoHandler,
+  handleChange = (html) => {
+    this.setState(
+      {
+        editorHtml: html,
       },
-    },
-    resize: {},
+      () => {
+        this.props.onEditorChange(this.state.editorHtml);
+      }
+    );
   };
 
-  const formats = [
-    "header",
-    "bold",
-    "italic",
-    "underline",
-    "strike",
-    "image",
-    "video",
-    "link",
-    "code-block",
-    "video",
-    "blockquote",
-    "clean",
-  ];
+  imageHandler = () => {
+    this.inputOpenImageRef.current.click();
+  };
 
-  const insertImage = useCallback((e) => {
+  videoHandler = () => {
+    this.inputOpenVideoRef.current.click();
+  };
+
+  insertImage = (e) => {
     e.stopPropagation();
     e.preventDefault();
 
@@ -121,11 +111,9 @@ const QuillEditor = ({ onEditorChange }) => {
       };
       formData.append("file", file);
 
-      console.log(file);
-
       axios.post("/api/blog/uploadfiles", formData, config).then((response) => {
         if (response.data.success) {
-          const quill = reactQuillRef.current.getEditor();
+          const quill = this.reactQuillRef.getEditor();
           quill.focus();
 
           let range = quill.getSelection();
@@ -141,9 +129,9 @@ const QuillEditor = ({ onEditorChange }) => {
         }
       });
     }
-  }, []);
+  };
 
-  const insertVideo = useCallback((e) => {
+  insertVideo = (e) => {
     e.stopPropagation();
     e.preventDefault();
 
@@ -162,7 +150,7 @@ const QuillEditor = ({ onEditorChange }) => {
 
       axios.post("/api/blog/uploadfiles", formData, config).then((response) => {
         if (response.data.success) {
-          const quill = reactQuillRef.current.getEditor();
+          const quill = this.reactQuillRef.getEditor();
           quill.focus();
 
           let range = quill.getSelection();
@@ -177,56 +165,89 @@ const QuillEditor = ({ onEditorChange }) => {
         }
       });
     }
-  }, []);
+  };
 
-  return (
-    <div>
-      <div id="toolbar">
-        <select
-          className="ql-header"
-          defaultValue={""}
-          onChange={(e) => e.persist()}
-        >
-          <option value="1" />
-          <option value="2" />
-          <option value="" />
-        </select>
-        <button className="ql-bold" />
-        <button className="ql-italic" />
-        <button className="ql-underline" />
-        <button className="ql-strike" />
-        <button className="ql-insertImage">I</button>
-        <button className="ql-insertVideo">V</button>
-        <button className="ql-link" />
-        <button className="ql-code-block" />
-        <button className="ql-video" />
-        <button className="ql-blockquote" />
-        <button className="ql-clean" />
+  render() {
+    return (
+      <div>
+        <div id="toolbar">
+          <select
+            className="ql-header"
+            defaultValue={""}
+            onChange={(e) => e.persist()}
+          >
+            <option value="1" />
+            <option value="2" />
+            <option value="" />
+          </select>
+          <button className="ql-bold" />
+          <button className="ql-italic" />
+          <button className="ql-underline" />
+          <button className="ql-strike" />
+          <button className="ql-insertImage">I</button>
+          <button className="ql-insertVideo">V</button>
+          <button className="ql-link" />
+          <button className="ql-code-block" />
+          <button className="ql-video" />
+          <button className="ql-blockquote" />
+          <button className="ql-clean" />
+        </div>
+        <ReactQuill
+          ref={(el) => {
+            this.reactQuillRef = el;
+          }}
+          theme="snow"
+          onChange={this.handleChange}
+          modules={this.modules}
+          formats={this.formats}
+          value={this.state.editorHtml}
+          placeholder={this.props.placeholder}
+        />
+        <input
+          type="file"
+          accept="image/*"
+          ref={this.inputOpenImageRef}
+          style={{ display: "none" }}
+          onChange={this.insertImage}
+        />
+        <input
+          type="file"
+          accept="video/*"
+          ref={this.inputOpenVideoRef}
+          style={{ display: "none" }}
+          onChange={this.insertVideo}
+        />
       </div>
-      <ReactQuill
-        ref={reactQuillRef}
-        theme="snow"
-        onChange={(html) => setEditorHtml(html)}
-        modules={modules}
-        formats={formats}
-        value={editorHtml}
-      />
-      <input
-        type="file"
-        accept="image/*"
-        ref={inputOpenImageRef}
-        style={{ display: "none" }}
-        onChange={insertImage}
-      />
-      <input
-        type="file"
-        accept="video/*"
-        ref={inputOpenVideoRef}
-        style={{ display: "none" }}
-        onChange={insertVideo}
-      />
-    </div>
-  );
-};
+    );
+  }
+
+  modules = {
+    syntax: true,
+
+    toolbar: {
+      container: "#toolbar",
+      handlers: {
+        insertImage: this.imageHandler,
+        insertVideo: this.videoHandler,
+      },
+    },
+    resize: {},
+  };
+
+  formats = [
+    "header",
+    "bold",
+    "italic",
+    "underline",
+    "strike",
+    "image",
+    "video",
+    "link",
+    "code-block",
+    "video",
+    "blockquote",
+    "clean",
+  ];
+}
 
 export default QuillEditor;

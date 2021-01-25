@@ -7,7 +7,6 @@ function CreatePage(props) {
   const [content, setContent] = useState("");
 
   const onEditorChange = (value) => {
-    console.log(value);
     setContent(value);
   };
 
