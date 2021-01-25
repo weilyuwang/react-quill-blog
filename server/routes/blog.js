@@ -36,6 +36,7 @@ const upload = multer({ storage: storage }).single("file");
 // size: 24031
 
 router.post("/uploadfiles", (req, res) => {
+  console.log("uploading file ", req.file);
   upload(req, res, (err) => {
     if (err) {
       return res.json({ success: false, err });
@@ -49,43 +50,27 @@ router.post("/uploadfiles", (req, res) => {
 });
 
 router.post("/createPost", (req, res) => {
-  let blog = new Blog({ content: req.body.content, writer: req.body.userID });
+  let blog = new Blog({ content: req.body.content });
 
   blog.save((err, postInfo) => {
     if (err) return res.json({ success: false, err });
     return res.status(200).json({ success: true, postInfo });
   });
-
-  //생각 해보니  세이브 할떄 populate 할필요가 없다.   가져올떄 하면 되니깐...
-  // blog.save((err, response) => {
-  //     if (err) return res.json({ success: false, err });
-  //     Blog.find({ _id: response._id })
-  //         .populate('writer')
-  //         .exec((err, result) => {
-  //             let postInfo = result[0]
-  //             if (err) return res.json({ success: false, err });
-  //             return res.status(200).json({ success: true,  postInfo });
-  //         })
-  // });
 });
 
 router.get("/getBlogs", (req, res) => {
-  Blog.find()
-    .populate("writer")
-    .exec((err, blogs) => {
-      if (err) return res.status(400).send(err);
-      res.status(200).json({ success: true, blogs });
-    });
+  Blog.find().exec((err, blogs) => {
+    if (err) return res.status(400).send(err);
+    res.status(200).json({ success: true, blogs });
+  });
 });
 
 router.post("/getPost", (req, res) => {
   console.log(req.body);
-  Blog.findOne({ _id: req.body.postId })
-    .populate("writer")
-    .exec((err, post) => {
-      if (err) return res.status(400).send(err);
-      res.status(200).json({ success: true, post });
-    });
+  Blog.findOne({ _id: req.body.postId }).exec((err, post) => {
+    if (err) return res.status(400).send(err);
+    res.status(200).json({ success: true, post });
+  });
 });
 
 module.exports = router;

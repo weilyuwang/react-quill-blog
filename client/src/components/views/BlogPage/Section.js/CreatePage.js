@@ -7,6 +7,7 @@ function CreatePage(props) {
   const [content, setContent] = useState("");
 
   const onEditorChange = (value) => {
+    console.log(value);
     setContent(value);
   };
 
@@ -35,10 +36,7 @@ function CreatePage(props) {
       <div style={{ textAlign: "center" }}>
         <Typography.Title level={2}> Editor</Typography.Title>
       </div>
-      <QuillEditor
-        placeholder={"Start Posting Something"}
-        onEditorChange={onEditorChange}
-      />
+      <QuillEditor onEditorChange={onEditorChange} />
 
       <Form onSubmit={onSubmit}>
         <div style={{ textAlign: "center", margin: "2rem" }}>
