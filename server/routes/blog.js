@@ -2,10 +2,22 @@ const express = require("express");
 const router = express.Router();
 const { Blog } = require("../models/Blog");
 const multer = require("multer");
+const multerS3 = require("multer-s3");
+const uuid = require("uuid/v1");
+const config = require("../config/key");
 
-// STORAGE MULTER CONFIG
-let storage = multer.diskStorage({
+const AWS = require("aws-sdk");
+
+const s3 = new AWS.S3({
+  accessKeyId: config.accessKeyId,
+  secretAccessKey: config.secretAccessKey,
+});
+
+// Local disk storage multer config
+const localStorage = multer.diskStorage({
   destination: (req, file, cb) => {
+    const key = `currentUserId/${uuid()}.jpg`;
+    console.log("req.file: ", file.originalname);
     cb(null, "uploads/");
   },
   filename: (req, file, cb) => {
@@ -20,30 +32,29 @@ let storage = multer.diskStorage({
   },
 });
 
-const upload = multer({ storage: storage }).single("file");
+const s3BucketStorage = multerS3({
+  s3: s3,
+  bucket: "quill-editor-blog-demo",
+  key: function (req, file, cb) {
+    console.log(file);
+    cb(null, file.originalname); //use Date.now() for unique file keys
+  },
+});
 
-//=================================
-//             Blog
-//=================================
-
-// fieldname: 'file',
-// originalname: 'React.png',
-// encoding: '7bit',
-// mimetype: 'image/png',
-// destination: 'uploads/',
-// filename: '1573656172282_React.png',
-// path: 'uploads/1573656172282_React.png',
-// size: 24031
+const upload = multer({
+  storage: s3BucketStorage,
+}).single("file");
 
 router.post("/uploadfiles", (req, res) => {
   upload(req, res, (err) => {
     if (err) {
       return res.json({ success: false, err });
     }
+    // console.log(res.req.file);
     return res.json({
       success: true,
-      url: res.req.file.path,
-      fileName: res.req.file.filename,
+      url: res.req.file.location, // s3 url
+      fileName: res.req.file.originalname, // file name
     });
   });
 });
