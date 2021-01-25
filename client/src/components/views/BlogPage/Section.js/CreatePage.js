@@ -5,15 +5,9 @@ import axios from "axios";
 
 function CreatePage(props) {
   const [content, setContent] = useState("");
-  const [files, setFiles] = useState([]);
 
   const onEditorChange = (value) => {
     setContent(value);
-    console.log(content);
-  };
-
-  const onFilesChange = (files) => {
-    setFiles(files);
   };
 
   const onSubmit = (event) => {
@@ -31,7 +25,7 @@ function CreatePage(props) {
 
         setTimeout(() => {
           props.history.push("/blog");
-        }, 2000);
+        }, 500);
       }
     });
   };
@@ -44,7 +38,6 @@ function CreatePage(props) {
       <QuillEditor
         placeholder={"Start Posting Something"}
         onEditorChange={onEditorChange}
-        onFilesChange={onFilesChange}
       />
 
       <Form onSubmit={onSubmit}>

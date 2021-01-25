@@ -59,13 +59,8 @@ VideoBlot.tagName = "video";
 Quill.register(VideoBlot);
 
 class QuillEditor extends React.Component {
-  bandId;
-  placeholder;
   onEditorChange;
-  onFilesChange;
-  onPollsChange;
-  _isMounted;
-  i;
+
   constructor(props) {
     super(props);
 
@@ -78,14 +73,6 @@ class QuillEditor extends React.Component {
     this.inputOpenImageRef = React.createRef();
     this.inputOpenVideoRef = React.createRef();
     this.inputOpenFileRef = React.createRef();
-  }
-
-  componentDidMount() {
-    this._isMounted = true;
-  }
-
-  componentWillUnmount() {
-    this._isMounted = false;
   }
 
   handleChange = (html) => {
@@ -137,17 +124,6 @@ class QuillEditor extends React.Component {
             alt: response.data.fileName,
           });
           quill.setSelection(position + 1);
-
-          if (this._isMounted) {
-            this.setState(
-              {
-                files: [...this.state.files, file],
-              },
-              () => {
-                this.props.onFilesChange(this.state.files);
-              }
-            );
-          }
         } else {
           return alert("failed to upload file");
         }
@@ -184,17 +160,6 @@ class QuillEditor extends React.Component {
             title: response.data.fileName,
           });
           quill.setSelection(position + 1);
-
-          if (this._isMounted) {
-            this.setState(
-              {
-                files: [...this.state.files, file],
-              },
-              () => {
-                this.props.onFilesChange(this.state.files);
-              }
-            );
-          }
         } else {
           return alert("failed to upload file");
         }
@@ -277,7 +242,6 @@ class QuillEditor extends React.Component {
     "strike",
     "image",
     "video",
-    "file",
     "link",
     "code-block",
     "video",
