@@ -75,8 +75,6 @@ VideoBlot.tagName = "video";
 Quill.register(VideoBlot);
 
 const QuillEditor = ({ onEditorChange, contentValue }) => {
-  // console.log("contentValue: ", contentValue);
-
   const reactQuillRef = useRef(null);
   const inputOpenImageRef = useRef();
   const inputOpenVideoRef = useRef();
@@ -357,7 +355,7 @@ const QuillEditor = ({ onEditorChange, contentValue }) => {
         accept="image/*"
         ref={inputOpenImageRef}
         style={{ display: "none" }}
-        onChange={insertImageBackend}
+        onChange={insertImageFrontend}
       />
       <input
         type="file"

@@ -15,13 +15,9 @@ function CreatePage(props) {
 
     setContent("");
 
-    const variables = {
-      content: content,
-    };
-
-    axios.post("/api/blog/createPost", variables).then((response) => {
+    axios.post("/api/blog", { content }).then((response) => {
       if (response) {
-        message.success("Post Created!");
+        message.success("Blog Created!");
 
         setTimeout(() => {
           props.history.push("/blog");

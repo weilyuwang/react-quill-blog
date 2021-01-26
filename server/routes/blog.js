@@ -62,7 +62,16 @@ router.post("/uploadfiles", (req, res) => {
   });
 });
 
-router.post("/createPost", (req, res) => {
+// Get all blogs
+router.get("/", (req, res) => {
+  Blog.find().exec((err, blogs) => {
+    if (err) return res.status(400).send(err);
+    res.status(200).json({ success: true, blogs });
+  });
+});
+
+// Create a new blog
+router.post("/", (req, res) => {
   let blog = new Blog({ content: req.body.content });
 
   blog.save((err, postInfo) => {
@@ -71,30 +80,27 @@ router.post("/createPost", (req, res) => {
   });
 });
 
-router.get("/getBlogs", (req, res) => {
-  Blog.find().exec((err, blogs) => {
-    if (err) return res.status(400).send(err);
-    res.status(200).json({ success: true, blogs });
-  });
-});
-
-router.post("/getPost", (req, res) => {
+// Get a single blog
+router.get("/:id", (req, res) => {
   console.log(req.body);
-  Blog.findOne({ _id: req.body.postId }).exec((err, post) => {
+  Blog.findOne({ _id: req.params.id }).exec((err, blog) => {
     if (err) return res.status(400).send(err);
-    res.status(200).json({ success: true, post });
+    res.status(200).json({ success: true, blog });
   });
 });
 
-router.put("/updatePost", async (req, res) => {
-  console.log("updatePost with req.body: ", req.body);
+// Update an exsisting blog
+router.put("/:id", async (req, res) => {
+  console.log(
+    `Updating blog ${req.params.id} with content: ${req.body.content}`
+  );
 
-  blog = await Blog.findOneAndUpdate({ _id: req.body.postId }, req.body);
-
-  res.status(200).json({
-    success: true,
-    post: blog,
-  });
+  try {
+    blog = await Blog.findOneAndUpdate({ _id: req.params.id }, req.body);
+    return res.status(200).json({ success: true, blog });
+  } catch (err) {
+    return res.status(400).send(err);
+  }
 });
 
 module.exports = router;

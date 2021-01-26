@@ -4,22 +4,20 @@ import { Typography, Button, Form, message } from "antd";
 import axios from "axios";
 
 function EditPage(props) {
-  const postId = props.match.params.postId;
+  const blogId = props.match.params.blogId;
   const [content, setContent] = useState("");
-  const [post, setPost] = useState([]);
+  const [blog, setBlog] = useState(null);
 
   useEffect(() => {
-    const variable = { postId: postId };
-
-    axios.post("/api/blog/getPost", variable).then((response) => {
+    axios.get(`/api/blog/${blogId}`).then((response) => {
       if (response.data.success) {
-        console.log(response.data.post);
-        setPost(response.data.post);
+        console.log(response.data.blog);
+        setBlog(response.data.blog);
       } else {
-        alert("Couldnt get post");
+        alert("Couldnt get blog ", blogId);
       }
     });
-  }, [postId]);
+  }, [blogId]);
 
   const onEditorChange = (value) => {
     setContent(value);
@@ -30,42 +28,36 @@ function EditPage(props) {
 
     setContent("");
 
-    const variables = {
-      content: content,
-    };
-
-    axios.put("/api/blog/updatePost", variables).then((response) => {
+    axios.put(`/api/blog/${blogId}`, { content }).then((response) => {
       if (response) {
-        message.success("Post updated!");
+        message.success("Blog updated!");
 
         setTimeout(() => {
-          props.history.push(`/blog/${postId}`);
+          props.history.push(`/blog/${blogId}`);
         }, 500);
       }
     });
   };
 
-  console.log("post:", post);
-
-  if (!post.content) {
-    return <h1>Loading...</h1>;
+  if (!blog) {
+    return <h1>Loading blog...</h1>;
   }
 
   return (
-    post.content && (
+    blog && (
       <div style={{ maxWidth: "700px", margin: "2rem auto" }}>
         <div style={{ textAlign: "center" }}>
           <Typography.Title level={2}> Editor</Typography.Title>
         </div>
         <QuillEditor
           onEditorChange={onEditorChange}
-          contentValue={post.content}
+          contentValue={blog.content}
         />
 
         <Form onSubmit={onSubmit}>
           <div style={{ textAlign: "center", margin: "2rem" }}>
             <Button size="large" htmlType="submit" className="">
-              Submit
+              Save
             </Button>
           </div>
         </Form>
