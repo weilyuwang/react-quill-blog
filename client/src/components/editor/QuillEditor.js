@@ -1,22 +1,24 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import ReactQuill, { Quill } from "react-quill";
+import { Spin } from "antd";
 
 import "react-quill/dist/quill.snow.css";
 import axios from "axios";
-import Resize, { EmbedPlaceholder } from "quill-resize-module-fix";
+import Resize from "quill-resize-module-fix";
+const Embed = Quill.import("blots/block/embed");
+
 Quill.register("modules/resize", Resize);
 
-class ImageBlot extends EmbedPlaceholder {
+class ImageBlot extends Embed {
   static create(value) {
     console.log("ImageBlot:", value);
 
-    const imgTag = super.create();
-    imgTag.setAttribute("src", value.src);
-    imgTag.setAttribute("alt", value.alt);
-    imgTag.setAttribute("style", value.style);
-    imgTag.setAttribute("class", value.class);
-    imgTag.setAttribute("width", "100%");
-    return imgTag;
+    const node = super.create();
+    for (const key in value) {
+      node.setAttribute(key, value[key]);
+    }
+    node.setAttribute("width", "80%");
+    return node;
   }
 
   static value(node) {
@@ -32,32 +34,34 @@ ImageBlot.blotName = "image";
 ImageBlot.tagName = "img";
 Quill.register(ImageBlot);
 
-class VideoBlot extends EmbedPlaceholder {
+class VideoBlot extends Embed {
   static create(value) {
     console.log("VideoBlot: ", value);
 
     if (value && value.src) {
-      const videoTag = super.create();
-      videoTag.setAttribute("src", value.src);
-      videoTag.setAttribute("title", value.title);
-      videoTag.setAttribute("style", value.style);
-      videoTag.setAttribute("class", value.class);
-      videoTag.setAttribute("width", "100%");
-      videoTag.setAttribute("controls", "");
+      // video
+      const node = super.create();
+      for (const key in value) {
+        node.setAttribute(key, value[key]);
+      }
+      node.setAttribute("width", "80%");
+      node.setAttribute("controls", "");
 
-      return videoTag;
+      return node;
     } else {
+      // iframe
       const iframeTag = document.createElement("iframe");
       iframeTag.setAttribute("src", value);
       iframeTag.setAttribute("frameborder", "0");
       iframeTag.setAttribute("allowfullscreen", true);
-      iframeTag.setAttribute("width", "100%");
+      iframeTag.setAttribute("width", "80%");
       return iframeTag;
     }
   }
 
   static value(node) {
     if (node.getAttribute("title")) {
+      // video
       return {
         src: node.getAttribute("src"),
         alt: node.getAttribute("title"),
@@ -66,7 +70,12 @@ class VideoBlot extends EmbedPlaceholder {
         class: node.getAttribute("class"),
       };
     } else {
-      return node.getAttribute("src");
+      // iframe
+      return {
+        src: node.getAttribute("src"),
+        frameborder: node.getAttribute("src"),
+        allowfullscreen: node.getAttribute("allowfullscreen"),
+      };
     }
   }
 }
@@ -80,6 +89,7 @@ const QuillEditor = ({ onEditorChange, contentValue }) => {
   const inputOpenVideoRef = useRef();
 
   const [editorHtml, setEditorHtml] = useState(contentValue);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     console.log("contentValue:", contentValue);
@@ -175,93 +185,93 @@ const QuillEditor = ({ onEditorChange, contentValue }) => {
     }
   }, []);
 
-  const insertImageBackend = useCallback((e) => {
-    e.stopPropagation();
-    e.preventDefault();
+  // const insertImageBackend = useCallback((e) => {
+  //   e.stopPropagation();
+  //   e.preventDefault();
 
-    if (
-      e.currentTarget &&
-      e.currentTarget.files &&
-      e.currentTarget.files.length > 0
-    ) {
-      const file = e.currentTarget.files[0];
+  //   if (
+  //     e.currentTarget &&
+  //     e.currentTarget.files &&
+  //     e.currentTarget.files.length > 0
+  //   ) {
+  //     const file = e.currentTarget.files[0];
 
-      let formData = new FormData();
-      const config = {
-        header: { "content-type": "multipart/form-data" },
-      };
-      formData.append("file", file);
+  //     let formData = new FormData();
+  //     const config = {
+  //       header: { "content-type": "multipart/form-data" },
+  //     };
+  //     formData.append("file", file);
 
-      // approach 1: transmit file to backend -> backend uploads file to s3
-      axios.post("/api/blog/uploadfiles", formData, config).then((response) => {
-        if (response.data.success) {
-          console.log("S3 file url: ", response.data.url);
+  //     // approach 1: transmit file to backend -> backend uploads file to s3
+  //     axios.post("/api/blog/uploadfiles", formData, config).then((response) => {
+  //       if (response.data.success) {
+  //         console.log("S3 file url: ", response.data.url);
 
-          const quill = reactQuillRef.current.getEditor();
-          quill.focus();
+  //         const quill = reactQuillRef.current.getEditor();
+  //         quill.focus();
 
-          let range = quill.getSelection();
-          let position = range ? range.index : 0;
+  //         let range = quill.getSelection();
+  //         let position = range ? range.index : 0;
 
-          quill.insertEmbed(position, "image", {
-            src: response.data.url,
-            alt: response.data.fileName,
-          });
-          quill.setSelection(position + 2);
-        } else {
-          return alert("failed to upload file");
-        }
-      });
-    }
-  }, []);
+  //         quill.insertEmbed(position, "image", {
+  //           src: response.data.url,
+  //           alt: response.data.fileName,
+  //         });
+  //         quill.setSelection(position + 2);
+  //       } else {
+  //         return alert("failed to upload file");
+  //       }
+  //     });
+  //   }
+  // }, []);
 
-  const insertVideoBackend = useCallback(async (e) => {
-    e.stopPropagation();
-    e.preventDefault();
+  // const insertVideoBackend = useCallback(async (e) => {
+  //   e.stopPropagation();
+  //   e.preventDefault();
 
-    if (
-      e.currentTarget &&
-      e.currentTarget.files &&
-      e.currentTarget.files.length > 0
-    ) {
-      const file = e.currentTarget.files[0];
+  //   if (
+  //     e.currentTarget &&
+  //     e.currentTarget.files &&
+  //     e.currentTarget.files.length > 0
+  //   ) {
+  //     const file = e.currentTarget.files[0];
 
-      let formData = new FormData();
-      const config = {
-        header: { "content-type": "multipart/form-data" },
-      };
-      formData.append("file", file);
+  //     let formData = new FormData();
+  //     const config = {
+  //       header: { "content-type": "multipart/form-data" },
+  //     };
+  //     formData.append("file", file);
 
-      // approach 1: transmit file to backend -> backend uploads file to s3
+  //     // approach 1: transmit file to backend -> backend uploads file to s3
 
-      const startTime = Date.now();
+  //     const startTime = Date.now();
 
-      axios.post("/api/blog/uploadfiles", formData, config).then((response) => {
-        const endTime = Date.now();
-        const timeElapsed = endTime - startTime; // time in milliseconds
-        console.log(
-          "time elapased with backend-heavy approach: ",
-          timeElapsed / 1000,
-          "sec"
-        );
+  //     axios.post("/api/blog/uploadfiles", formData, config).then((response) => {
+  //       const endTime = Date.now();
+  //       const timeElapsed = endTime - startTime; // time in milliseconds
+  //       console.log(
+  //         "time elapased with backend-heavy approach: ",
+  //         timeElapsed / 1000,
+  //         "sec"
+  //       );
 
-        if (response.data.success) {
-          const quill = reactQuillRef.current.getEditor();
-          quill.focus();
+  //       if (response.data.success) {
+  //         const quill = reactQuillRef.current.getEditor();
+  //         quill.focus();
 
-          let range = quill.getSelection();
-          let position = range ? range.index : 0;
-          quill.insertEmbed(position, "video", {
-            src: response.data.url,
-            title: response.data.fileName,
-          });
-          quill.setSelection(position + 2);
-        } else {
-          return alert("failed to upload file");
-        }
-      });
-    }
-  }, []);
+  //         let range = quill.getSelection();
+  //         let position = range ? range.index : 0;
+  //         quill.insertEmbed(position, "video", {
+  //           src: response.data.url,
+  //           title: response.data.fileName,
+  //         });
+  //         quill.setSelection(position + 2);
+  //       } else {
+  //         return alert("failed to upload file");
+  //       }
+  //     });
+  //   }
+  // }, []);
 
   const insertVideoFrontend = useCallback(async (e) => {
     e.stopPropagation();
@@ -275,8 +285,6 @@ const QuillEditor = ({ onEditorChange, contentValue }) => {
       const file = e.currentTarget.files[0];
 
       // approach 2: call backend to get a presigned s3 url -> frontend uploads file to s3
-
-      const startTime = Date.now();
       const { data: uploadConfig } = await axios.get(
         `/api/upload/signedUrl/${file.name}`
       );
@@ -288,14 +296,10 @@ const QuillEditor = ({ onEditorChange, contentValue }) => {
         headers: { "Content-Type": file.type },
       };
 
+      setIsLoading(true);
       axios.put(uploadConfig.url, file, config).then((response) => {
-        const endTime = Date.now();
-        const timeElapsed = endTime - startTime; // time in milliseconds
-        console.log(
-          "time elapased with frontend-heavy approach: ",
-          timeElapsed / 1000,
-          "sec"
-        );
+        setIsLoading(false);
+
         if (response.status === 200 && response.statusText === "OK") {
           const quill = reactQuillRef.current.getEditor();
           quill.focus();
@@ -339,31 +343,33 @@ const QuillEditor = ({ onEditorChange, contentValue }) => {
         <button className="ql-blockquote" />
         <button className="ql-clean" />
       </div>
-      <ReactQuill
-        ref={reactQuillRef}
-        theme="snow"
-        onChange={(html) => {
-          console.log("onChange:", html);
-          setEditorHtml(html);
-        }}
-        modules={modules}
-        formats={formats}
-        value={editorHtml}
-      />
-      <input
-        type="file"
-        accept="image/*"
-        ref={inputOpenImageRef}
-        style={{ display: "none" }}
-        onChange={insertImageFrontend}
-      />
-      <input
-        type="file"
-        accept="video/*"
-        ref={inputOpenVideoRef}
-        style={{ display: "none" }}
-        onChange={insertVideoFrontend}
-      />
+      <Spin spinning={isLoading} tip="Uploading file...">
+        <ReactQuill
+          ref={reactQuillRef}
+          theme="snow"
+          onChange={(html) => {
+            console.log("onChange:", html);
+            setEditorHtml(html);
+          }}
+          modules={modules}
+          formats={formats}
+          value={editorHtml}
+        />
+        <input
+          type="file"
+          accept="image/*"
+          ref={inputOpenImageRef}
+          style={{ display: "none" }}
+          onChange={insertImageFrontend}
+        />
+        <input
+          type="file"
+          accept="video/*"
+          ref={inputOpenVideoRef}
+          style={{ display: "none" }}
+          onChange={insertVideoFrontend}
+        />
+      </Spin>
     </div>
   );
 };
