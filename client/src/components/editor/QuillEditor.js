@@ -8,16 +8,24 @@ Quill.register("modules/resize", Resize);
 
 class ImageBlot extends EmbedPlaceholder {
   static create(value) {
+    console.log("ImageBlot:", value);
+
     const imgTag = super.create();
     imgTag.setAttribute("src", value.src);
     imgTag.setAttribute("alt", value.alt);
+    imgTag.setAttribute("style", value.style);
+    imgTag.setAttribute("class", value.class);
     imgTag.setAttribute("width", "100%");
-
     return imgTag;
   }
 
   static value(node) {
-    return { src: node.getAttribute("src"), alt: node.getAttribute("alt") };
+    return {
+      src: node.getAttribute("src"),
+      alt: node.getAttribute("alt"),
+      style: node.getAttribute("style"),
+      class: node.getAttribute("class"),
+    };
   }
 }
 ImageBlot.blotName = "image";
@@ -26,14 +34,17 @@ Quill.register(ImageBlot);
 
 class VideoBlot extends EmbedPlaceholder {
   static create(value) {
+    console.log("VideoBlot: ", value);
+
     if (value && value.src) {
       const videoTag = super.create();
       videoTag.setAttribute("src", value.src);
       videoTag.setAttribute("title", value.title);
+      videoTag.setAttribute("style", value.style);
+      videoTag.setAttribute("class", value.class);
       videoTag.setAttribute("width", "100%");
       videoTag.setAttribute("controls", "");
 
-      console.log("videoTag:", videoTag);
       return videoTag;
     } else {
       const iframeTag = document.createElement("iframe");
@@ -47,7 +58,13 @@ class VideoBlot extends EmbedPlaceholder {
 
   static value(node) {
     if (node.getAttribute("title")) {
-      return { src: node.getAttribute("src"), alt: node.getAttribute("title") };
+      return {
+        src: node.getAttribute("src"),
+        alt: node.getAttribute("title"),
+        title: node.getAttribute("title"),
+        style: node.getAttribute("style"),
+        class: node.getAttribute("class"),
+      };
     } else {
       return node.getAttribute("src");
     }
@@ -57,14 +74,22 @@ VideoBlot.blotName = "video";
 VideoBlot.tagName = "video";
 Quill.register(VideoBlot);
 
-const QuillEditor = ({ onEditorChange }) => {
+const QuillEditor = ({ onEditorChange, contentValue }) => {
+  // console.log("contentValue: ", contentValue);
+
   const reactQuillRef = useRef(null);
   const inputOpenImageRef = useRef();
   const inputOpenVideoRef = useRef();
 
-  const [editorHtml, setEditorHtml] = useState(null);
+  const [editorHtml, setEditorHtml] = useState(contentValue);
 
   useEffect(() => {
+    console.log("contentValue:", contentValue);
+    setEditorHtml(contentValue);
+  }, []);
+
+  useEffect(() => {
+    console.log("editorHtml:", editorHtml);
     onEditorChange(editorHtml);
   }, [editorHtml, onEditorChange]);
 

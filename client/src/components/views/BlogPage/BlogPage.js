@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { Card, Icon, Col, Typography, Row } from "antd";
+import { Link } from "react-router-dom";
 
 function BlogPage() {
   const [blogs, setBlogs] = useState([]);
@@ -18,21 +19,13 @@ function BlogPage() {
   const renderCards = blogs.map((blog, index) => {
     return (
       <Col key={index} lg={8} md={12} xs={24}>
-        <Card
-          hoverable
-          style={{ width: 370, marginTop: 16 }}
-          actions={[
-            <Icon type="setting" key="setting" />,
-            <Icon type="edit" key="edit" />,
-            <a href={`/blog/post/${blog._id}`}>
-              <Icon type="ellipsis" key="ellipsis" />
-            </a>,
-          ]}
-        >
-          <div style={{ height: 150, overflowY: "scroll", marginTop: 10 }}>
-            <div dangerouslySetInnerHTML={{ __html: blog.content }} />
-          </div>
-        </Card>
+        <Link to={`/blog/${blog._id}`}>
+          <Card hoverable style={{ width: 370, marginTop: 16 }}>
+            <div style={{ height: 150, overflowY: "scroll", marginTop: 10 }}>
+              <div dangerouslySetInnerHTML={{ __html: blog.content }} />
+            </div>
+          </Card>
+        </Link>
       </Col>
     );
   });

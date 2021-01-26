@@ -7,6 +7,7 @@ import NavBar from "./views/NavBar/NavBar";
 import PostPage from "./views/PostPage/PostPage";
 import BlogPage from "./views/BlogPage/BlogPage";
 import CreateBlogPage from "./views/BlogPage/Section.js/CreatePage";
+import EditPage from "./views/BlogPage/Section.js/EditPage.js";
 
 function App() {
   return (
@@ -17,7 +18,8 @@ function App() {
           <Route exact path="/" component={LandingPage} />
           <Route exact path="/blog" component={BlogPage} />
           <Route exact path="/blog/create" component={CreateBlogPage} />
-          <Route exact path="/blog/post/:postId" component={PostPage} />
+          <Route exact path="/blog/:postId" component={PostPage} />
+          <Route exact path="/blog/:postId/edit" component={EditPage} />
         </Switch>
       </div>
     </>
