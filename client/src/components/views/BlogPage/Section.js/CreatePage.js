@@ -31,7 +31,7 @@ function CreatePage(props) {
       <div style={{ textAlign: "center" }}>
         <Typography.Title level={2}> Editor</Typography.Title>
       </div>
-      <QuillEditor onContentChange={onContentChange} value={content} />
+      <QuillEditor onContentChange={onContentChange} content={content} />
 
       <Form onSubmit={onSubmit}>
         <div style={{ textAlign: "center", margin: "2rem" }}>

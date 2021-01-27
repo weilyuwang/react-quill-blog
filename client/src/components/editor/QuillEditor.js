@@ -149,7 +149,7 @@ const QuillEditor = ({ onContentChange, content }) => {
 
       // Get the pre-signed s3 url
       const { data: uploadConfig } = await axios.get(
-        `/api/upload/signedUrl/${file.name}`
+        `/api/v1/uploads/signedUrl/${file.name}`
       );
       console.log("pre-signed s3 bucket url:", uploadConfig.url);
 
