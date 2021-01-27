@@ -137,7 +137,10 @@ const QuillEditor = ({ onEditorChange, contentValue }) => {
     "clean",
   ];
 
-  const insertImageFrontend = useCallback(async (e) => {
+  const awsBucketUrl =
+    "https://quill-editor-blog-demo.s3.us-east-2.amazonaws.com";
+
+  const insertFile = useCallback(async (e, type, awsBucketUrl) => {
     e.stopPropagation();
     e.preventDefault();
 
@@ -171,13 +174,21 @@ const QuillEditor = ({ onEditorChange, contentValue }) => {
         quill.focus();
         let range = quill.getSelection();
         let position = range ? range.index : 0;
-        quill.insertEmbed(position, "image", {
-          // "https://quill-editor-blog-demo.s3.us-east-2.amazonaws.com/marmot.jpg?Content-Type=jpg&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIATVR3K3RS5AARKG4L%2F20210126%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20210126T023151Z&X-Amz-Expires=900&X-Amz-Signature=6dd334f103aa622b2190fb14ee0199f59a01a17411b456934a4d1738358492fd&X-Amz-SignedHeaders=host"
-          src:
-            "https://quill-editor-blog-demo.s3.us-east-2.amazonaws.com/" +
-            response.config.data.name,
-          alt: response.config.data.name,
-        });
+
+        const src = awsBucketUrl + "/" + response.config.data.name;
+
+        if (type === "image") {
+          quill.insertEmbed(position, "image", {
+            src: src,
+            alt: response.config.data.name,
+          });
+        } else if (type === "video") {
+          quill.insertEmbed(position, "video", {
+            src: src,
+            title: response.config.data.name,
+          });
+        }
+
         quill.setSelection(position + 2);
       } else {
         return alert("failed to upload file");
@@ -185,95 +196,7 @@ const QuillEditor = ({ onEditorChange, contentValue }) => {
     }
   }, []);
 
-  // const insertImageBackend = useCallback((e) => {
-  //   e.stopPropagation();
-  //   e.preventDefault();
-
-  //   if (
-  //     e.currentTarget &&
-  //     e.currentTarget.files &&
-  //     e.currentTarget.files.length > 0
-  //   ) {
-  //     const file = e.currentTarget.files[0];
-
-  //     let formData = new FormData();
-  //     const config = {
-  //       header: { "content-type": "multipart/form-data" },
-  //     };
-  //     formData.append("file", file);
-
-  //     // approach 1: transmit file to backend -> backend uploads file to s3
-  //     axios.post("/api/blog/uploadfiles", formData, config).then((response) => {
-  //       if (response.data.success) {
-  //         console.log("S3 file url: ", response.data.url);
-
-  //         const quill = reactQuillRef.current.getEditor();
-  //         quill.focus();
-
-  //         let range = quill.getSelection();
-  //         let position = range ? range.index : 0;
-
-  //         quill.insertEmbed(position, "image", {
-  //           src: response.data.url,
-  //           alt: response.data.fileName,
-  //         });
-  //         quill.setSelection(position + 2);
-  //       } else {
-  //         return alert("failed to upload file");
-  //       }
-  //     });
-  //   }
-  // }, []);
-
-  // const insertVideoBackend = useCallback(async (e) => {
-  //   e.stopPropagation();
-  //   e.preventDefault();
-
-  //   if (
-  //     e.currentTarget &&
-  //     e.currentTarget.files &&
-  //     e.currentTarget.files.length > 0
-  //   ) {
-  //     const file = e.currentTarget.files[0];
-
-  //     let formData = new FormData();
-  //     const config = {
-  //       header: { "content-type": "multipart/form-data" },
-  //     };
-  //     formData.append("file", file);
-
-  //     // approach 1: transmit file to backend -> backend uploads file to s3
-
-  //     const startTime = Date.now();
-
-  //     axios.post("/api/blog/uploadfiles", formData, config).then((response) => {
-  //       const endTime = Date.now();
-  //       const timeElapsed = endTime - startTime; // time in milliseconds
-  //       console.log(
-  //         "time elapased with backend-heavy approach: ",
-  //         timeElapsed / 1000,
-  //         "sec"
-  //       );
-
-  //       if (response.data.success) {
-  //         const quill = reactQuillRef.current.getEditor();
-  //         quill.focus();
-
-  //         let range = quill.getSelection();
-  //         let position = range ? range.index : 0;
-  //         quill.insertEmbed(position, "video", {
-  //           src: response.data.url,
-  //           title: response.data.fileName,
-  //         });
-  //         quill.setSelection(position + 2);
-  //       } else {
-  //         return alert("failed to upload file");
-  //       }
-  //     });
-  //   }
-  // }, []);
-
-  const insertVideoFrontend = useCallback(async (e) => {
+  const insertFileBackend = useCallback((e, type) => {
     e.stopPropagation();
     e.preventDefault();
 
@@ -284,33 +207,34 @@ const QuillEditor = ({ onEditorChange, contentValue }) => {
     ) {
       const file = e.currentTarget.files[0];
 
-      // approach 2: call backend to get a presigned s3 url -> frontend uploads file to s3
-      const { data: uploadConfig } = await axios.get(
-        `/api/upload/signedUrl/${file.name}`
-      );
-      console.log("pre-signed s3 bucket url:", uploadConfig.url);
-
-      // upload video to the signedUrl
-      console.log("file to upload to S3: ", file);
+      let formData = new FormData();
       const config = {
-        headers: { "Content-Type": file.type },
+        header: { "content-type": "multipart/form-data" },
       };
+      formData.append("file", file);
 
-      setIsLoading(true);
-      axios.put(uploadConfig.url, file, config).then((response) => {
-        setIsLoading(false);
+      // approach 1: transmit file to backend -> backend uploads file to s3
+      axios.post("/api/blog/uploadfiles", formData, config).then((response) => {
+        if (response.data.success) {
+          console.log("S3 file url: ", response.data.url);
 
-        if (response.status === 200 && response.statusText === "OK") {
           const quill = reactQuillRef.current.getEditor();
           quill.focus();
+
           let range = quill.getSelection();
           let position = range ? range.index : 0;
-          quill.insertEmbed(position, "video", {
-            src:
-              "https://quill-editor-blog-demo.s3.us-east-2.amazonaws.com/" +
-              response.config.data.name,
-            title: response.config.data.name,
-          });
+          if (type === "image") {
+            quill.insertEmbed(position, "image", {
+              src: response.data.url,
+              alt: response.data.fileName,
+            });
+          } else if (type === "video") {
+            quill.insertEmbed(position, "video", {
+              src: response.data.url,
+              title: response.data.fileName,
+            });
+          }
+
           quill.setSelection(position + 2);
         } else {
           return alert("failed to upload file");
@@ -360,14 +284,14 @@ const QuillEditor = ({ onEditorChange, contentValue }) => {
           accept="image/*"
           ref={inputOpenImageRef}
           style={{ display: "none" }}
-          onChange={insertImageFrontend}
+          onChange={(e) => insertFileBackend(e, "image")}
         />
         <input
           type="file"
           accept="video/*"
           ref={inputOpenVideoRef}
           style={{ display: "none" }}
-          onChange={insertVideoFrontend}
+          onChange={(e) => insertFileBackend(e, "video")}
         />
       </Spin>
     </div>
