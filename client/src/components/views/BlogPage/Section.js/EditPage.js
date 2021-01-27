@@ -19,8 +19,8 @@ function EditPage(props) {
     });
   }, [blogId]);
 
-  const onEditorChange = (value) => {
-    setContent(value);
+  const onContentChange = (text, source) => {
+    setContent(text);
   };
 
   const onSubmit = (event) => {
@@ -49,10 +49,7 @@ function EditPage(props) {
         <div style={{ textAlign: "center" }}>
           <Typography.Title level={2}> Editor</Typography.Title>
         </div>
-        <QuillEditor
-          onEditorChange={onEditorChange}
-          contentValue={blog.content}
-        />
+        <QuillEditor onContentChange={onContentChange} content={blog.content} />
 
         <Form onSubmit={onSubmit}>
           <div style={{ textAlign: "center", margin: "2rem" }}>

@@ -83,23 +83,19 @@ VideoBlot.blotName = "video";
 VideoBlot.tagName = "video";
 Quill.register(VideoBlot);
 
-const QuillEditor = ({ onEditorChange, contentValue }) => {
+const QuillEditor = ({ onContentChange, content }) => {
   const reactQuillRef = useRef(null);
   const inputOpenImageRef = useRef();
   const inputOpenVideoRef = useRef();
 
-  const [editorHtml, setEditorHtml] = useState(contentValue);
+  const [editorHtml, setEditorHtml] = useState("");
+
   const [isLoading, setIsLoading] = useState(false);
 
+  // initial content
   useEffect(() => {
-    console.log("contentValue:", contentValue);
-    setEditorHtml(contentValue);
-  }, []);
-
-  useEffect(() => {
-    console.log("editorHtml:", editorHtml);
-    onEditorChange(editorHtml);
-  }, [editorHtml, onEditorChange]);
+    setEditorHtml(content);
+  }, [content]);
 
   const imageHandler = useCallback(() => {
     inputOpenImageRef.current.click();
@@ -151,8 +147,6 @@ const QuillEditor = ({ onEditorChange, contentValue }) => {
     ) {
       const file = e.currentTarget.files[0];
 
-      // pre-signed s3 url approach : call backend to get a presigned s3 url -> frontend uploads file to s3
-
       // Get the pre-signed s3 url
       const { data: uploadConfig } = await axios.get(
         `/api/upload/signedUrl/${file.name}`
@@ -165,8 +159,9 @@ const QuillEditor = ({ onEditorChange, contentValue }) => {
         headers: { "Content-Type": file.type },
       };
 
+      setIsLoading(true);
       const response = await axios.put(uploadConfig.url, file, config);
-
+      setIsLoading(false);
       // console.log("response: ", response);
       console.log("uploaded file url: ", response.config.url);
       if (response.status === 200 && response.statusText === "OK") {
@@ -196,52 +191,56 @@ const QuillEditor = ({ onEditorChange, contentValue }) => {
     }
   }, []);
 
-  const insertFileBackend = useCallback((e, type) => {
-    e.stopPropagation();
-    e.preventDefault();
+  // const insertFileBackend = useCallback((e, type) => {
+  //   e.stopPropagation();
+  //   e.preventDefault();
 
-    if (
-      e.currentTarget &&
-      e.currentTarget.files &&
-      e.currentTarget.files.length > 0
-    ) {
-      const file = e.currentTarget.files[0];
+  //   if (
+  //     e.currentTarget &&
+  //     e.currentTarget.files &&
+  //     e.currentTarget.files.length > 0
+  //   ) {
+  //     const file = e.currentTarget.files[0];
 
-      let formData = new FormData();
-      const config = {
-        header: { "content-type": "multipart/form-data" },
-      };
-      formData.append("file", file);
+  //     let formData = new FormData();
+  //     const config = {
+  //       header: { "content-type": "multipart/form-data" },
+  //     };
+  //     formData.append("file", file);
 
-      // approach 1: transmit file to backend -> backend uploads file to s3
-      axios.post("/api/blog/uploadfiles", formData, config).then((response) => {
-        if (response.data.success) {
-          console.log("S3 file url: ", response.data.url);
+  //     // approach 1: transmit file to backend -> backend uploads file to s3
 
-          const quill = reactQuillRef.current.getEditor();
-          quill.focus();
+  //     setIsLoading(true);
+  //     axios.post("/api/blog/uploadfiles", formData, config).then((response) => {
+  //       setIsLoading(false);
 
-          let range = quill.getSelection();
-          let position = range ? range.index : 0;
-          if (type === "image") {
-            quill.insertEmbed(position, "image", {
-              src: response.data.url,
-              alt: response.data.fileName,
-            });
-          } else if (type === "video") {
-            quill.insertEmbed(position, "video", {
-              src: response.data.url,
-              title: response.data.fileName,
-            });
-          }
+  //       if (response.data.success) {
+  //         console.log("S3 file url: ", response.data.url);
 
-          quill.setSelection(position + 2);
-        } else {
-          return alert("failed to upload file");
-        }
-      });
-    }
-  }, []);
+  //         const quill = reactQuillRef.current.getEditor();
+  //         quill.focus();
+
+  //         let range = quill.getSelection();
+  //         let position = range ? range.index : 0;
+  //         if (type === "image") {
+  //           quill.insertEmbed(position, "image", {
+  //             src: response.data.url,
+  //             alt: response.data.fileName,
+  //           });
+  //         } else if (type === "video") {
+  //           quill.insertEmbed(position, "video", {
+  //             src: response.data.url,
+  //             title: response.data.fileName,
+  //           });
+  //         }
+
+  //         quill.setSelection(position + 2);
+  //       } else {
+  //         return alert("failed to upload file");
+  //       }
+  //     });
+  //   }
+  // }, []);
 
   return (
     <div>
@@ -271,9 +270,9 @@ const QuillEditor = ({ onEditorChange, contentValue }) => {
         <ReactQuill
           ref={reactQuillRef}
           theme="snow"
-          onChange={(html) => {
-            console.log("onChange:", html);
-            setEditorHtml(html);
+          onChange={(text, _, source) => {
+            setEditorHtml(text);
+            onContentChange(text, source);
           }}
           modules={modules}
           formats={formats}
@@ -284,14 +283,14 @@ const QuillEditor = ({ onEditorChange, contentValue }) => {
           accept="image/*"
           ref={inputOpenImageRef}
           style={{ display: "none" }}
-          onChange={(e) => insertFileBackend(e, "image")}
+          onChange={(e) => insertFile(e, "image", awsBucketUrl)}
         />
         <input
           type="file"
           accept="video/*"
           ref={inputOpenVideoRef}
           style={{ display: "none" }}
-          onChange={(e) => insertFileBackend(e, "video")}
+          onChange={(e) => insertFile(e, "video", awsBucketUrl)}
         />
       </Spin>
     </div>

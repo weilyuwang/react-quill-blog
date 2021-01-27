@@ -6,8 +6,8 @@ import axios from "axios";
 function CreatePage(props) {
   const [content, setContent] = useState("");
 
-  const onEditorChange = (value) => {
-    setContent(value);
+  const onContentChange = (text, source) => {
+    setContent(text);
   };
 
   const onSubmit = (event) => {
@@ -31,7 +31,7 @@ function CreatePage(props) {
       <div style={{ textAlign: "center" }}>
         <Typography.Title level={2}> Editor</Typography.Title>
       </div>
-      <QuillEditor onEditorChange={onEditorChange} />
+      <QuillEditor onContentChange={onContentChange} value={content} />
 
       <Form onSubmit={onSubmit}>
         <div style={{ textAlign: "center", margin: "2rem" }}>
