@@ -4,6 +4,7 @@ const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
 const config = require("./config/key");
 const mongoose = require("mongoose");
+const cors = require("cors");
 
 mongoose
   .connect(config.mongoURI, {
@@ -18,6 +19,8 @@ mongoose
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(cookieParser());
+
+app.use(cors());
 
 app.use("/api/blog", require("./routes/blog"));
 app.use("/api/v1/uploads", require("./routes/upload"));

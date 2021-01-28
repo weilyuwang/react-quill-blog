@@ -1,14 +1,28 @@
-import React, { useEffect, useState, useRef, useCallback } from "react";
+import React, { useState, useRef, useCallback } from "react";
 import ReactQuill, { Quill } from "react-quill";
-import { Spin } from "antd";
-
+import { Spin, Icon } from "antd";
 import "react-quill/dist/quill.snow.css";
 import axios from "axios";
 import Resize from "quill-resize-module-fix";
 const Embed = Quill.import("blots/block/embed");
 
 Quill.register("modules/resize", Resize);
+class AudioBlot extends Embed {
+  static create(value) {
+    const node = super.create();
+    node.setAttribute("src", value.src);
+    node.setAttribute("controls", "");
+    return node;
+  }
 
+  static value(node) {
+    return node.getAttribute("src");
+  }
+}
+
+AudioBlot.blotName = "audio";
+AudioBlot.tagName = "audio";
+Quill.register(AudioBlot);
 class ImageBlot extends Embed {
   static create(value) {
     console.log("ImageBlot:", value);
@@ -87,15 +101,11 @@ const QuillEditor = ({ onContentChange, content }) => {
   const reactQuillRef = useRef(null);
   const inputOpenImageRef = useRef();
   const inputOpenVideoRef = useRef();
+  const inputOpenAudioRef = useRef();
 
-  const [editorHtml, setEditorHtml] = useState("");
+  const [editorHtml, setEditorHtml] = useState(content);
 
   const [isLoading, setIsLoading] = useState(false);
-
-  // initial content
-  useEffect(() => {
-    setEditorHtml(content);
-  }, [content]);
 
   const imageHandler = useCallback(() => {
     inputOpenImageRef.current.click();
@@ -105,14 +115,32 @@ const QuillEditor = ({ onContentChange, content }) => {
     inputOpenVideoRef.current.click();
   }, []);
 
+  const audioHandler = useCallback(() => {
+    inputOpenAudioRef.current.click();
+  }, []);
+
+  const imageUrlHandler = useCallback(() => {
+    const quill = reactQuillRef.current.getEditor();
+    let range = quill.getSelection();
+    let position = range ? range.index : 0;
+
+    const src = prompt("Enter the image URL");
+    if (src) {
+      quill.insertEmbed(position, "image", src, "user");
+      quill.setSelection(position + 2);
+    }
+  }, []);
+
   const modules = {
     syntax: true,
 
     toolbar: {
       container: "#toolbar",
       handlers: {
+        image: imageUrlHandler,
         insertImage: imageHandler,
         insertVideo: videoHandler,
+        insertAudio: audioHandler,
       },
     },
     resize: {},
@@ -120,17 +148,28 @@ const QuillEditor = ({ onContentChange, content }) => {
 
   const formats = [
     "header",
+    "font",
+    "size",
     "bold",
     "italic",
     "underline",
+    "align",
+    "align-center",
+    "align-right",
     "strike",
+    "script",
+    "blockquote",
+    "background",
+    "list",
+    "bullet",
+    "indent",
+    "link",
     "image",
     "video",
-    "link",
-    "code-block",
+    "audio",
+    "image",
     "video",
-    "blockquote",
-    "clean",
+    "audio",
   ];
 
   const awsBucketUrl =
@@ -173,15 +212,27 @@ const QuillEditor = ({ onContentChange, content }) => {
         const src = awsBucketUrl + "/" + response.config.data.name;
 
         if (type === "image") {
-          quill.insertEmbed(position, "image", {
-            src: src,
-            alt: response.config.data.name,
-          });
+          quill.insertEmbed(
+            position,
+            "image",
+            {
+              src: src,
+              alt: response.config.data.name,
+            },
+            "user"
+          );
         } else if (type === "video") {
-          quill.insertEmbed(position, "video", {
-            src: src,
-            title: response.config.data.name,
-          });
+          quill.insertEmbed(
+            position,
+            "video",
+            {
+              src: src,
+              title: response.config.data.name,
+            },
+            "user"
+          );
+        } else if (type === "audio") {
+          quill.insertEmbed(position, "audio", { src: src }, "user");
         }
 
         quill.setSelection(position + 2);
@@ -245,26 +296,44 @@ const QuillEditor = ({ onContentChange, content }) => {
   return (
     <div>
       <div id="toolbar">
-        <select
-          className="ql-header"
-          defaultValue={""}
-          onChange={(e) => e.persist()}
-        >
-          <option value="1" />
-          <option value="2" />
-          <option value="" />
-        </select>
-        <button className="ql-bold" />
-        <button className="ql-italic" />
-        <button className="ql-underline" />
-        <button className="ql-strike" />
-        <button className="ql-insertImage">I</button>
-        <button className="ql-insertVideo">V</button>
-        <button className="ql-link" />
-        <button className="ql-code-block" />
-        <button className="ql-video" />
-        <button className="ql-blockquote" />
-        <button className="ql-clean" />
+        <span className="ql-formats">
+          <select className="ql-header"></select>
+        </span>
+        <span className="ql-formats">
+          <button className="ql-bold" />
+          <button className="ql-italic" />
+          <button className="ql-underline" />
+          <button className="ql-strike" />
+          <button className="ql-blockquote" />
+        </span>
+        <span className="ql-formats">
+          <button className="ql-list" value="ordered" />
+          <button className="ql-list" value="bullet" />
+          <select className="ql-align" />
+        </span>
+        <span className="ql-formats">
+          <button className="ql-link" />
+          <button className="ql-image" />
+          <button className="ql-video" />
+          <button className="ql-audio">
+            <Icon type="audio" style={{ marginBottom: "2px" }} />
+          </button>
+        </span>
+        <span className="ql-formats">
+          <button className="ql-insertImage">
+            <Icon type="picture" theme="filled" style={{ fontSize: "16px" }} />
+          </button>
+          <button className="ql-insertVideo">
+            <Icon
+              type="video-camera"
+              theme="filled"
+              style={{ fontSize: "16px" }}
+            />
+          </button>
+          <button className="ql-insertAudio">
+            <Icon type="audio" theme="filled" style={{ fontSize: "16px" }} />
+          </button>
+        </span>
       </div>
       <Spin spinning={isLoading} tip="Uploading file...">
         <ReactQuill
@@ -291,6 +360,13 @@ const QuillEditor = ({ onContentChange, content }) => {
           ref={inputOpenVideoRef}
           style={{ display: "none" }}
           onChange={(e) => insertFile(e, "video", awsBucketUrl)}
+        />
+        <input
+          type="file"
+          accept="audio/*"
+          ref={inputOpenAudioRef}
+          style={{ display: "none" }}
+          onChange={(e) => insertFile(e, "audio", awsBucketUrl)}
         />
       </Spin>
     </div>
