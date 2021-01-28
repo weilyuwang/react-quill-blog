@@ -2,7 +2,8 @@ const express = require("express");
 const config = require("../config/key");
 const uuid = require("uuid/v1");
 const AWS = require("aws-sdk");
-var path = require("path");
+const path = require("path");
+const mime = require("mime-types");
 
 const s3 = new AWS.S3({
   credentials: {
@@ -28,14 +29,16 @@ router.get("/awsbuckets", (req, res) => {
 router.get("/signedUrl/:filename", (req, res) => {
   const filename = req.params.filename;
   const ext = path.extname(filename).split(".").pop();
+  const contentType = mime.lookup(filename);
+
+  console.log("file extension is :", ext);
+  console.log("file content type is :", contentType);
 
   const params = {
     Bucket: "quill-editor-blog-demo",
-    ContentType: ext,
+    ContentType: contentType,
     Key: filename, // name of the file we are uploading
   };
-
-  console.log("content type is:", ext);
 
   s3.getSignedUrl("putObject", params, (err, url) => {
     console.log("The pre-signed URL is:", url);
