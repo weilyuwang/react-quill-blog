@@ -187,58 +187,52 @@ const QuillEditor = ({ onContentChange, content }) => {
       const file = e.currentTarget.files[0];
 
       // Get the pre-signed s3 url
-      const { data: uploadConfig } = await axios.get(
+      setIsLoading(true);
+
+      const { data: url } = await axios.get(
         `/api/v1/uploads/signedUrl/${file.name}`
       );
-      console.log("pre-signed s3 bucket url:", uploadConfig.url);
+      console.log("pre-signed s3 bucket url:", url);
 
       // upload image to the signedUrl
       console.log("file to upload to S3: ", file);
-      const config = {
+      await axios.put(url, file, {
         headers: { "Content-Type": file.type },
-      };
-
-      setIsLoading(true);
-      const response = await axios.put(uploadConfig.url, file, config);
+      });
       setIsLoading(false);
-      // console.log("response: ", response);
-      console.log("uploaded file url: ", response.config.url);
-      if (response.status === 200 && response.statusText === "OK") {
-        const quill = reactQuillRef.current.getEditor();
-        quill.focus();
-        let range = quill.getSelection();
-        let position = range ? range.index : 0;
 
-        const src = awsBucketUrl + "/" + response.config.data.name;
+      const quill = reactQuillRef.current.getEditor();
+      quill.focus();
+      let range = quill.getSelection();
+      let position = range ? range.index : 0;
 
-        if (type === "image") {
-          quill.insertEmbed(
-            position,
-            "image",
-            {
-              src: src,
-              alt: response.config.data.name,
-            },
-            "user"
-          );
-        } else if (type === "video") {
-          quill.insertEmbed(
-            position,
-            "video",
-            {
-              src: src,
-              title: response.config.data.name,
-            },
-            "user"
-          );
-        } else if (type === "audio") {
-          quill.insertEmbed(position, "audio", { src: src }, "user");
-        }
+      const src = awsBucketUrl + "/" + file.name;
 
-        quill.setSelection(position + 2);
-      } else {
-        return alert("failed to upload file");
+      if (type === "image") {
+        quill.insertEmbed(
+          position,
+          "image",
+          {
+            src: src,
+            alt: file.name,
+          },
+          "user"
+        );
+      } else if (type === "video") {
+        quill.insertEmbed(
+          position,
+          "video",
+          {
+            src: src,
+            title: file.name,
+          },
+          "user"
+        );
+      } else if (type === "audio") {
+        quill.insertEmbed(position, "audio", { src: src }, "user");
       }
+
+      quill.setSelection(position + 2);
     }
   }, []);
 

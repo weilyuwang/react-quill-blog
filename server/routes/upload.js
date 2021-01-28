@@ -35,9 +35,11 @@ router.get("/signedUrl/:filename", (req, res) => {
     Key: filename, // name of the file we are uploading
   };
 
+  console.log("content type is:", ext);
+
   s3.getSignedUrl("putObject", params, (err, url) => {
     console.log("The pre-signed URL is:", url);
-    res.send({ filename, url });
+    res.send(url);
   });
 });
 
