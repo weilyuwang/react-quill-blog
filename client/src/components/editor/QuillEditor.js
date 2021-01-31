@@ -16,7 +16,9 @@ class AudioBlot extends Embed {
   }
 
   static value(node) {
-    return node.getAttribute("src");
+    return {
+      src: node.getAttribute("src"),
+    };
   }
 }
 
@@ -335,6 +337,7 @@ const QuillEditor = ({ onContentChange, content }) => {
           theme="snow"
           onChange={(text, _, source) => {
             setEditorHtml(text);
+            console.log(text);
             onContentChange(text, source);
           }}
           modules={modules}

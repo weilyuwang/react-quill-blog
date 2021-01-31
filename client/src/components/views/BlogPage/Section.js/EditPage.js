@@ -23,7 +23,7 @@ function EditPage(props) {
     setContent(text);
   };
 
-  const onSubmit = (event) => {
+  const onUpdate = (event) => {
     event.preventDefault();
 
     setContent("");
@@ -33,7 +33,7 @@ function EditPage(props) {
         message.success("Blog updated!");
 
         setTimeout(() => {
-          props.history.push(`/blog/${blogId}`);
+          props.history.push(`/blog`);
         }, 500);
       }
     });
@@ -51,7 +51,7 @@ function EditPage(props) {
         </div>
         <QuillEditor onContentChange={onContentChange} content={blog.content} />
 
-        <Form onSubmit={onSubmit}>
+        <Form onSubmit={onUpdate}>
           <div style={{ textAlign: "center", margin: "2rem" }}>
             <Button size="large" htmlType="submit" className="">
               Save
