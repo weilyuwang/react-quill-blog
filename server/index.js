@@ -23,7 +23,7 @@ app.use(cookieParser());
 app.use(cors());
 
 app.use("/api/blog", require("./routes/blog"));
-app.use("/api/v1/uploads", require("./routes/upload"));
+app.use("/api/v1/media", require("./routes/upload"));
 
 //use this to show the image you have in node js server to client (react js)
 //https://stackoverflow.com/questions/48914987/send-image-path-from-node-js-express-server-to-react-client

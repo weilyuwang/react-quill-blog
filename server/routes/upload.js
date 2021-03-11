@@ -13,10 +13,9 @@ const s3 = new AWS.S3({
 
 const router = express.Router();
 
-router.get("/signedUrl/:filename", (req, res) => {
-  const filename = req.params.filename;
+router.post("/signedUrl", (req, res) => {
+  const { filename, courseId } = req.body;
   const contentType = mime.lookup(filename);
-
   const params = {
     Bucket: "quill-editor-blog-demo",
     ContentType: contentType,
@@ -24,8 +23,15 @@ router.get("/signedUrl/:filename", (req, res) => {
   };
 
   s3.getSignedUrl("putObject", params, (err, url) => {
+    if (err) {
+      console.log(err);
+    }
     console.log("The pre-signed URL is:", url);
-    res.send(url);
+    res.send({
+      fileSource:
+        "https://quill-editor-blog-demo.s3.us-east-2.amazonaws.com/" + filename,
+      url: url,
+    });
   });
 });
 

@@ -191,9 +191,12 @@ const QuillEditor = ({ onContentChange, content }) => {
       // Get the pre-signed s3 url
       setIsLoading(true);
 
-      const { data: url } = await axios.get(
-        `/api/v1/uploads/signedUrl/${file.name}`
-      );
+      const {
+        data: { url, fileSource },
+      } = await axios.post(`/api/v1/media/signedUrl`, {
+        filename: file.name,
+        courseId: "123",
+      });
       console.log("pre-signed s3 bucket url:", url);
 
       // upload image to the signedUrl
